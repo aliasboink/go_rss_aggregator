@@ -1,0 +1,13 @@
+get http://localhost:8080/v1/readiness
+Content-Type: application/json
+###
+get http://localhost:8080/v1/err
+Content-Type: application/json
+
+###
+get http://localhost:8080/v1/users
+Content-Type: application/json
+
+{
+  "name": "UwU!"
+}
