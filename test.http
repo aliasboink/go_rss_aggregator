@@ -5,9 +5,44 @@ get http://localhost:8080/v1/err
 Content-Type: application/json
 
 ###
-get http://localhost:8080/v1/users
+post http://localhost:8080/v1/users
 Content-Type: application/json
 
 {
-  "name": "UwU!"
+  "name": "Testy!"
 }
+
+###
+get http://localhost:8080/v1/users
+Authorization: ApiKey f552095389055c0b3f7aabb2614ec1b19fae57b78aa94ef975f1cb35647e071a
+
+###
+post http://localhost:8080/v1/feeds
+Authorization: ApiKey f552095389055c0b3f7aabb2614ec1b19fae57b78aa94ef975f1cb35647e071a
+
+{
+  "name": "The Boot.dev Blog",
+  "url": "https://blog.boot.dev/index.xml"
+}
+
+###
+get http://localhost:8080/v1/feeds
+
+###
+get http://localhost:8080/v1/feed_follows
+Authorization: ApiKey f552095389055c0b3f7aabb2614ec1b19fae57b78aa94ef975f1cb35647e071a
+
+
+###
+# (TODO): Doesn't check for duplicates. Returns OK, but nothing is saved or broken. FIX!!!
+post http://localhost:8080/v1/feed_follows
+Authorization: ApiKey f552095389055c0b3f7aabb2614ec1b19fae57b78aa94ef975f1cb35647e071a
+
+{
+  "feed_id": "18d98b4c-094c-499b-a238-f6d91ef13fe9"
+}
+
+###
+delete http://localhost:8080/v1/feed_follows/b6887706-4482-4ff6-9e82-82833286d26f
+
+
