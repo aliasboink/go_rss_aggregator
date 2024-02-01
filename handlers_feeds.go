@@ -36,6 +36,18 @@ func (cfg *apiConfig) handlerPostFeed(w http.ResponseWriter, r *http.Request, us
 		respondWithError(w, 500, "Something went wrong!")
 		return
 	}
+	_, err = cfg.DB.CreateFeedFollow(r.Context(), database.CreateFeedFollowParams{
+		ID:        uuid.New(),
+		CreatedAt: feed.CreatedAt,
+		UpdatedAt: feed.UpdatedAt,
+		FeedID:    feed.ID,
+		UserID:    user.ID,
+	})
+	if err != nil {
+		log.Print(err)
+		respondWithError(w, 500, "Something went wrong!")
+		return
+	}
 	respondWithJSON(w, 200, feed)
 	return
 }

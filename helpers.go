@@ -4,7 +4,33 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"rss/internal/database"
+	"time"
+
+	"github.com/google/uuid"
 )
+
+type Feed struct {
+	ID            uuid.UUID
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	Name          string
+	Url           string
+	UserID        uuid.UUID
+	LastFetchedAt *time.Time
+}
+
+func databaseFeedToFeed(feed database.Feed) Feed {
+	return Feed{
+		ID:            feed.ID,
+		CreatedAt:     feed.CreatedAt,
+		UpdatedAt:     feed.UpdatedAt,
+		Name:          feed.Name,
+		Url:           feed.Url,
+		UserID:        feed.UserID,
+		LastFetchedAt: &feed.LastFetchedAt.Time,
+	}
+}
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
 	response := struct {
@@ -21,7 +47,6 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(data)
-	return
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
@@ -34,5 +59,4 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(data)
-	return
 }

@@ -65,6 +65,8 @@ func main() {
 		Handler: r,
 	}
 
+	fetchRSS("https://blog.boot.dev/index.xml")
+
 	log.Printf("Starting server on port %s\n", port)
 	log.Fatal(server.ListenAndServe())
 }
