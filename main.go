@@ -7,7 +7,7 @@ import (
 	"os"
 	"rss/internal/database"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -65,7 +65,7 @@ func main() {
 		Handler: r,
 	}
 
-	fetchRSS("https://blog.boot.dev/index.xml")
+	go rssThiefWorker(dbQueries, 10, 10)
 
 	log.Printf("Starting server on port %s\n", port)
 	log.Fatal(server.ListenAndServe())

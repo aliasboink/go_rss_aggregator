@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/xml"
-	"fmt"
 	"log"
 	"net/http"
+	"rss/internal/database"
+	"sync"
+	"time"
 )
 
 // This is the first successful attempt and I don't like it all that much.
@@ -23,23 +26,48 @@ type Item struct {
 	Description string `xml:"description"`
 }
 
-func fetchRSS(rssUrl string) error {
+func fetchRSS(rssUrl string) (RSSFeed, error) {
 	rss, err := http.Get(rssUrl)
 	if err != nil {
 		log.Println(err)
-		return err
+		return RSSFeed{}, err
 	}
 	decoder := xml.NewDecoder(rss.Body)
 	rssFeed := RSSFeed{}
 	err = decoder.Decode(&rssFeed)
 	if err != nil {
 		log.Println(err)
-		return err
+		return RSSFeed{}, err
 	}
-	log.Println(rssUrl)
-	log.Println(err)
-	for _, item := range rssFeed.Channel.Items {
-		fmt.Println(item)
+	return rssFeed, nil
+}
+
+func rssThiefWorker(db *database.Queries, interval time.Duration, numberOfFeeds int32) {
+	log.Println("[WORKER] Worker started...")
+	for range time.Tick(time.Second * time.Duration(interval)) {
+		feeds, err := db.GetNextFeedsToFetch(context.Background(), numberOfFeeds)
+		if err != nil {
+			log.Println("[WORKER] Error fetching feeds: ", err)
+			continue
+		}
+		var wg sync.WaitGroup
+		for _, feed := range feeds {
+			wg.Add(1)
+			log.Println("[WORKER] Work started on " + feed.Name)
+			go func(feed database.Feed) {
+				defer wg.Done()
+				rssFeed, err := fetchRSS(feed.Url)
+				if err != nil {
+					log.Println("[WORKER] Error fetching rss: ", err)
+					return
+				}
+				log.Println("[WORKER] URL of RSS: " + feed.Url)
+				for _, item := range rssFeed.Channel.Items {
+					log.Println("[WORKER] Link of RSS item: " + item.Link)
+				}
+			}(feed)
+		}
+		wg.Wait()
+		log.Println("[WORKER] Feeds done fetching...")
 	}
-	return nil
 }
