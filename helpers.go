@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -10,26 +11,48 @@ import (
 	"github.com/google/uuid"
 )
 
-type Feed struct {
-	ID            uuid.UUID
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	Name          string
-	Url           string
-	UserID        uuid.UUID
-	LastFetchedAt *time.Time
+// id UUID PRIMARY KEY,
+// created_at TIMESTAMP NOT NULL,
+// updated_at TIMESTAMP NOT NULL,
+// title TEXT NOT NULL,
+// url TEXT UNIQUE NOT NULL,
+// description TEXT,
+// published_at TIMESTAMP NOT NULL,
+// feed_id UUID NOT NULL REFERENCES feeds(id) ON DELETE CASCADE
+type Post struct {
+	ID          uuid.UUID
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Title       string
+	Url         string
+	Description string
+	UserID      uuid.UUID
+	PublishedAt string
+	FeedID      uuid.UUID
 }
 
-func databaseFeedToFeed(feed database.Feed) Feed {
-	return Feed{
-		ID:            feed.ID,
-		CreatedAt:     feed.CreatedAt,
-		UpdatedAt:     feed.UpdatedAt,
-		Name:          feed.Name,
-		Url:           feed.Url,
-		UserID:        feed.UserID,
-		LastFetchedAt: &feed.LastFetchedAt.Time,
+func postToDatabasePost(post Post) (database.CreatePostParams, error) {
+	desc := sql.NullString{Valid: false}
+	if post.Description != "" {
+		desc = sql.NullString{
+			String: post.Description,
+			Valid:  true,
+		}
 	}
+	parsedTime, err := time.Parse(time.RFC1123Z, post.PublishedAt)
+	if err != nil {
+		return database.CreatePostParams{}, err
+	}
+	return database.CreatePostParams{
+		ID:          post.ID,
+		CreatedAt:   post.CreatedAt,
+		UpdatedAt:   post.UpdatedAt,
+		Title:       post.Title,
+		Url:         post.Url,
+		Description: desc,
+		PublishedAt: parsedTime,
+		FeedID:      post.FeedID,
+	}, nil
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {

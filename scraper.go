@@ -8,6 +8,8 @@ import (
 	"rss/internal/database"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // This is the first successful attempt and I don't like it all that much.
@@ -24,6 +26,7 @@ type Item struct {
 	Title       string `xml:"title"`
 	Link        string `xml:"link"`
 	Description string `xml:"description"`
+	PublishedAt string `xml:"pubDate"`
 }
 
 func fetchRSS(rssUrl string) (RSSFeed, error) {
@@ -64,6 +67,29 @@ func rssThiefWorker(db *database.Queries, interval time.Duration, numberOfFeeds 
 				log.Println("[WORKER] URL of RSS: " + feed.Url)
 				for _, item := range rssFeed.Channel.Items {
 					log.Println("[WORKER] Link of RSS item: " + item.Link)
+
+					postParams, err := postToDatabasePost(Post{
+						ID:          uuid.New(),
+						CreatedAt:   time.Now(),
+						UpdatedAt:   time.Now(),
+						Title:       item.Title,
+						Url:         item.Link,
+						Description: item.Description,
+						PublishedAt: item.PublishedAt,
+						FeedID:      feed.ID,
+					})
+					if err != nil {
+						log.Println("[WORKER] Error parsing time: ", err)
+						continue
+					}
+
+					_, err = db.CreatePost(context.Background(), postParams)
+					if err != nil {
+						if err.Error() != "pq: duplicate key value violates unique constraint \"posts_url_key\"" {
+							log.Println("[WORKER] Error creating post: ", err.Error())
+						}
+						continue
+					}
 				}
 			}(feed)
 		}
