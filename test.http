@@ -45,4 +45,7 @@ Authorization: ApiKey f552095389055c0b3f7aabb2614ec1b19fae57b78aa94ef975f1cb3564
 ###
 delete http://localhost:8080/v1/feed_follows/b6887706-4482-4ff6-9e82-82833286d26f
 
+### 
+get http://localhost:8080/v1/posts
+Authorization: ApiKey f552095389055c0b3f7aabb2614ec1b19fae57b78aa94ef975f1cb35647e071a
 

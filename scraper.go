@@ -39,7 +39,7 @@ func fetchRSS(rssUrl string) (RSSFeed, error) {
 	rssFeed := RSSFeed{}
 	err = decoder.Decode(&rssFeed)
 	if err != nil {
-		log.Println(err)
+		log.Printf("[fetchRSS] Error with %v: %v", rssUrl, err)
 		return RSSFeed{}, err
 	}
 	return rssFeed, nil
@@ -53,6 +53,7 @@ func rssThiefWorker(db *database.Queries, interval time.Duration, numberOfFeeds 
 			log.Println("[WORKER] Error fetching feeds: ", err)
 			continue
 		}
+		count := 0
 		var wg sync.WaitGroup
 		for _, feed := range feeds {
 			wg.Add(1)
@@ -61,12 +62,13 @@ func rssThiefWorker(db *database.Queries, interval time.Duration, numberOfFeeds 
 				defer wg.Done()
 				rssFeed, err := fetchRSS(feed.Url)
 				if err != nil {
-					log.Println("[WORKER] Error fetching rss: ", err)
+					log.Printf("[WORKER] Error fetching rss with url %v: %v", feed.Url, err)
 					return
 				}
 				log.Println("[WORKER] URL of RSS: " + feed.Url)
 				for _, item := range rssFeed.Channel.Items {
-					log.Println("[WORKER] Link of RSS item: " + item.Link)
+					// log.Println("[WORKER] Link of RSS item: " + item.Link)
+					count++
 
 					postParams, err := postToDatabasePost(Post{
 						ID:          uuid.New(),
@@ -94,6 +96,6 @@ func rssThiefWorker(db *database.Queries, interval time.Duration, numberOfFeeds 
 			}(feed)
 		}
 		wg.Wait()
-		log.Println("[WORKER] Feeds done fetching...")
+		log.Printf("[WORKER] Feeds done fetching %d feeds...", count)
 	}
 }
